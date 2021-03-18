@@ -46,7 +46,7 @@ for idx, cat in enumerate(categories):
         img = img.resize((image_w, image_h))
         data = np.asarray(img)
 
-        X.append(data)
+        X.append(data) 
         y.append(label)
 
         if i % 700 == 0:

@@ -1,5 +1,7 @@
+# https://www.kaggle.com/phsaikiran/the-simpsons-characters-classification
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 import matplotlib.pyplot as plt
 from keras.preprocessing.image import ImageDataGenerator
 from numpy import expand_dims
@@ -9,9 +11,9 @@ from keras.layers import *
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from keras.optimizers import Adam,SGD
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.applications import EfficientNetB7, NASNetMobile
+from tensorflow.keras.applications import EfficientNetB7, EfficientNetB4
 from tensorflow.keras.applications.efficientnet import preprocess_input
-
+from tensorflow.keras.models import Sequential, load_model
 
 #데이터 지정 및 전처리
 x = np.load("C:/LPD_competition/npy/P_project_x4.npy",allow_pickle=True)
@@ -21,11 +23,8 @@ y = np.load("C:/LPD_competition/npy/P_project_y4.npy",allow_pickle=True)
 # for i, digit in enumerate(y):
 #     y1[i, digit] = 1
 
-
 x = preprocess_input(x) # (48000, 255, 255, 3)
 x_pred = preprocess_input(x_pred)   # 
-
-
 
 idg = ImageDataGenerator(
     # rotation_range=10, acc 하락
@@ -58,51 +57,64 @@ y = np.argmax(y, axis=1)
 from sklearn.model_selection import train_test_split
 x_train, x_valid, y_train, y_valid = train_test_split(x,y, train_size = 0.8, shuffle = True, random_state=42)
 
-mc = ModelCheckpoint('C:/LPD_competition/lotte_projcet2.h5',save_best_only=True, verbose=1)
+mc = ModelCheckpoint('C:/LPD_competition/lotte_0318_1.h5',save_best_only=True, verbose=1)
 
-
-
-train_generator = idg.flow(x_train,y_train,batch_size=32)
+train_generator = idg.flow(x_train,y_train,batch_size=24)
 # seed => random_state
 valid_generator = idg2.flow(x_valid,y_valid)
 test_generator = x_pred
 
-
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import GlobalAveragePooling2D, Flatten, BatchNormalization, Dense, Activation
 from tensorflow.keras.applications import VGG19, MobileNet, ResNet50
+from keras.layers import concatenate, Concatenate
 
 
-efficientnetb7 = ResNet50(include_top=False,weights='imagenet',input_shape=x_train.shape[1:])
-efficientnetb7.trainable = True
+# EfficientNetB4 = EfficientNetB4(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
+# a = EfficientNetB4.output
+# a = GlobalAveragePooling2D()(a)
+# a = Flatten()(a)
+# a = Dense(2024, activation= 'relu') (a)
 
-a = efficientnetb7.output
-a = GlobalAveragePooling2D() (a)
-a = Flatten() (a)
-a = Dense(128) (a)
-a = BatchNormalization() (a)
-a = Activation('relu') (a)
-a = Dense(64) (a)
-a = BatchNormalization() (a)
-a = Activation('relu') (a)
-a = Dense(1000, activation= 'softmax') (a)
+mobile_net = MobileNet(weights="imagenet", include_top=False, input_shape=(128, 128, 3))
+b = mobile_net.output
+b = GlobalAveragePooling2D()(b)
+b = Flatten()(b)
+b = Dense(2024, activation= 'relu')(b)
 
-model = Model(inputs = efficientnetb7.input, outputs = a)
+resnet50 = ResNet50(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
+for i in resnet50.layers:
+    i._name = "%s_workaround"%i.name
+c = resnet50.output
+c = GlobalAveragePooling2D()(c)
+c = Flatten()(c)
+c = Dense(2024, activation= 'relu') (c)
 
-# from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
-# early_stopping = EarlyStopping(patience= 15)
-# lr = ReduceLROnPlateau(patience= 7, factor=0.5)
+merge1 = concatenate([b,c])
+# b = Flatten()(merge1)
+merge1 = Dense(1024, activation="relu")(merge1)
+merge1 = Dense(4048, activation="softmax")(merge1)
+model = Model(inputs=[ mobile_net.input, resnet50.input], outputs = merge1)#EfficientNetB4.input,
+# model.summary()
 
-# model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(lr=1e-5,epsilon=None),
-#                 metrics=['acc'])
-# learning_history = model.fit_generator(train_generator,epochs=100, 
-#     validation_data=valid_generator, callbacks=[early_stopping,lr,mc])
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+early_stopping = EarlyStopping(patience= 20)
+lr = ReduceLROnPlateau(patience= 10, factor=0.5)
+
+model.compile(optimizer=tf.keras.optimizers.Adam(lr=1e-5), 
+                loss = 'sparse_categorical_crossentropy', metrics=['accuracy'])
+
+learning_history = model.fit([x_train,x_train], y_train,epochs=200, 
+    validation_data=([x_valid, x_valid],y_valid), callbacks=[early_stopping,lr,mc])
 
 # predict
-model.load_weights('C:/LPD_competition/lotte_projcet2.h5')
+# model = load_model('C:/data/h5/lotte_0317_2.h5')
+model.load_weights('C:/LPD_competition/lotte_0318_1.h5', by_name=True)
 result = model.predict(test_generator,verbose=True)
-    
+
 print(result.shape)
 sub = pd.read_csv('C:/LPD_competition/sample.csv')
 sub['prediction'] = np.argmax(result,axis = 1)
-sub.to_csv('C:/LPD_competition/answer4.csv',index=False)
+sub.to_csv('C:/LPD_competition/lotte0318_1.csv',index=False)
+
+# 점수 73점
