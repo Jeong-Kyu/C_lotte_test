@@ -70,11 +70,11 @@ from tensorflow.keras.applications import VGG19, MobileNet, ResNet50
 from keras.layers import concatenate, Concatenate
 
 
-# EfficientNetB4 = EfficientNetB4(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
-# a = EfficientNetB4.output
-# a = GlobalAveragePooling2D()(a)
-# a = Flatten()(a)
-# a = Dense(2024, activation= 'relu') (a)
+EfficientNetB4 = EfficientNetB4(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
+a = EfficientNetB4.output
+a = GlobalAveragePooling2D()(a)
+a = Flatten()(a)
+a = Dense(2024, activation= 'relu') (a)
 
 mobile_net = MobileNet(weights="imagenet", include_top=False, input_shape=(128, 128, 3))
 b = mobile_net.output
@@ -82,19 +82,19 @@ b = GlobalAveragePooling2D()(b)
 b = Flatten()(b)
 b = Dense(2024, activation= 'relu')(b)
 
-resnet50 = ResNet50(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
-for i in resnet50.layers:
-    i._name = "%s_workaround"%i.name
-c = resnet50.output
-c = GlobalAveragePooling2D()(c)
-c = Flatten()(c)
-c = Dense(2024, activation= 'relu') (c)
+# resnet50 = ResNet50(weights="imagenet", include_top=False, input_shape=(128, 128, 3))  
+# for i in resnet50.layers:
+#     i._name = "%s_workaround"%i.name
+# c = resnet50.output
+# c = GlobalAveragePooling2D()(c)
+# c = Flatten()(c)
+# c = Dense(2024, activation= 'relu') (c)
 
-merge1 = concatenate([b,c])
+merge1 = concatenate([a,b])
 # b = Flatten()(merge1)
 merge1 = Dense(1024, activation="relu")(merge1)
 merge1 = Dense(4048, activation="softmax")(merge1)
-model = Model(inputs=[ mobile_net.input, resnet50.input], outputs = merge1)#EfficientNetB4.input,
+model = Model(inputs=[ EfficientNetB4.input, mobile_net.input], outputs = merge1)#EfficientNetB4.input,resnet50.input
 # model.summary()
 
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -109,7 +109,7 @@ learning_history = model.fit([x_train,x_train], y_train,epochs=200,
 
 # predict
 # model = load_model('C:/data/h5/lotte_0317_2.h5')
-model.load_weights('C:/LPD_competition/lotte_0318_1.h5', by_name=True)
+model.load_weights('C:/LPD_competition/lotte_0318_1.h5')
 result = model.predict(test_generator,verbose=True)
 
 print(result.shape)

@@ -35,7 +35,7 @@ test_gen = ImageDataGenerator(
 # Found 39000 images belonging to 1000 classes.
 train_data = train_gen.flow_from_directory(
     'C:/LPD_competition/train',
-    target_size = (256, 256),
+    target_size = (128, 128),
     class_mode = 'categorical',
     batch_size = batch,
     seed = seed,
@@ -45,7 +45,7 @@ train_data = train_gen.flow_from_directory(
 # Found 9000 images belonging to 1000 classes.
 val_data = train_gen.flow_from_directory(
     'C:/LPD_competition/train',
-    target_size = (256, 256),
+    target_size = (128, 128),
     class_mode = 'categorical',
     batch_size = batch,
     seed = seed,
@@ -54,8 +54,8 @@ val_data = train_gen.flow_from_directory(
 
 # Found 72000 images belonging to 1 classes.
 test_data = test_gen.flow_from_directory(
-    'C:/LPD_competition/test',
-    target_size = (256, 256),
+    'C:/LPD_competition/t/test',
+    target_size = (128, 128),
     class_mode = None,
     batch_size = batch,
     seed = seed,
@@ -63,7 +63,7 @@ test_data = test_gen.flow_from_directory(
 )
 
 #2. 모델
-eff = EfficientNetB0(include_top = False, input_shape = (256, 256, 3))
+eff = EfficientNetB0(include_top = False, input_shape = (128, 128, 3))
 eff.trainable = False
 
 model = Sequential()

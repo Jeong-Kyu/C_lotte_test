@@ -49,6 +49,7 @@ y = np.argmax(y, axis=1)
 
 from sklearn.model_selection import train_test_split
 x_train, x_valid, y_train, y_valid = train_test_split(x,y, train_size = 0.8, shuffle = True, random_state=66)
+kfold = KFold(n_splits=5, shuffle=True)
 
 
 train_generator = idg.flow(x_train,y_train,batch_size=32)
@@ -56,20 +57,20 @@ train_generator = idg.flow(x_train,y_train,batch_size=32)
 valid_generator = idg2.flow(x_valid,y_valid)
 test_generator = x_pred
 
-mc = ModelCheckpoint('C:/LPD_competition/lotte_sy_projcet.h5',save_best_only=True, verbose=1)
+mc = ModelCheckpoint('C:/LPD_competition/lotte_m2_projcet.h5',save_best_only=True, verbose=1)
 
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import GlobalAveragePooling2D, Flatten, BatchNormalization, Dense, Activation
-from tensorflow.keras.applications import VGG19, MobileNet
-mobile_net = MobileNet(weights="imagenet", include_top=False, input_shape=(128, 128, 3))
+from tensorflow.keras.applications import VGG19, MobileNet,InceptionResNetV2, InceptionV3, EfficientNetB2
+mobile_net = EfficientNetB2(weights="imagenet", include_top=False, input_shape=(128, 128, 3))
 
 # for layer in mobile_net.layers:
 # layer.trainable = False
     
 top_model = mobile_net.output
 top_model = GlobalAveragePooling2D()(top_model)
-top_model = Flatten()(top_model)
-top_model = Dense(1024, activation="relu")(top_model)
+# top_model = Flatten()(top_model)
+top_model = Dense(4048, activation="swish")(top_model)
 # top_model = Dense(1024, activation="relu")(top_model)
 # top_model = Dense(512, activation="relu")(top_model)
 top_model = Dense(1000, activation="softmax")(top_model)
@@ -87,10 +88,10 @@ learning_history = model.fit_generator(train_generator,epochs=200,
     validation_data=valid_generator, callbacks=[early_stopping,lr,mc])
 
 # predict
-model.load_weights('C:/LPD_competition/lotte_sy_projcet.h5')
+model.load_weights('C:/LPD_competition/lotte_m2_projcet.h5')
 #result = model.predict(x_pred,verbose=True)
 
-tta_steps = 10
+tta_steps = 20
 predictions = []
 
 for i in tqdm(range(tta_steps)):
@@ -101,4 +102,4 @@ final_pred = np.mean(predictions, axis=0)
 
 sub = pd.read_csv('C:/LPD_competition/sample.csv')
 sub['prediction'] = np.argmax(final_pred,axis = 1)
-sub.to_csv('C:/LPD_competition/answer0318.csv',index=False)
+sub.to_csv('C:/LPD_competition/answer0318_m2.csv',index=False)
