@@ -23,8 +23,8 @@ for i in range(0,1000) :
 
 nb_classes = len(categories)
 
-image_w = 128
-image_h = 128
+image_w = 140
+image_h = 140
 
 pixels = image_h * image_w * 3
 
@@ -55,11 +55,11 @@ for idx, cat in enumerate(categories):
 X = np.array(X)
 y = np.array(y)
 
-np.save("C:/LPD_competition/npy/P_project_x4.npy", arr=X)
-np.save("C:/LPD_competition/npy/P_project_y4.npy", arr=y)
+np.save("C:/LPD_competition/npy/140project_x.npy", arr=X)
+np.save("C:/LPD_competition/npy/140project_y.npy", arr=y)
 # x_pred = np.load("../data/npy/P_project_test.npy",allow_pickle=True)
-x = np.load("C:/LPD_competition/npy/P_project_x4.npy",allow_pickle=True)
-y = np.load("C:/LPD_competition/npy/P_project_y4.npy",allow_pickle=True)
+x = np.load("C:/LPD_competition/npy/140project_x.npy",allow_pickle=True)
+y = np.load("C:/LPD_competition/npy/140project_y.npy",allow_pickle=True)
 
 print(x.shape)
 print(y.shape)
@@ -70,18 +70,18 @@ for i in range(0,72000):
     filepath='C:/LPD_competition/t/test/%d.jpg'%i
     image2=Image.open(filepath)
     image2 = image2.convert('RGB')
-    image2 = image2.resize((128,128))
+    image2 = image2.resize((140,140))
     image_data2=asarray(image2)
     # image_data2 = signal.medfilt2d(np.array(image_data2), kernel_size=3)
     img1.append(image_data2)    
 
 # np.save('../data/csv/Dacon3/train4.npy', arr=img)
-np.save('C:/LPD_competition/npy/test.npy', arr=img1)
+np.save('C:/LPD_competition/npy/140test.npy', arr=img1)
 # alphabets = string.ascii_lowercase
 # alphabets = list(alphabets)
 
 
 # x = np.load('../data/csv/Dacon3/train4.npy')
-x_pred = np.load('C:/LPD_competition/npy/test.npy',allow_pickle=True)
+x_pred = np.load('C:/LPD_competition/npy/140test.npy',allow_pickle=True)
 
 print(x_pred.shape)

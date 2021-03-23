@@ -21,14 +21,14 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Flatten, BatchNormal
 from tensorflow.python.keras.applications.efficientnet import EfficientNetB7
 
 SEED = 66
-IMAGE_SIZE = (150,150,3)
+IMAGE_SIZE = (128,128,3)
 EPOCH = 50
 OPTIMIZER =Adam(learning_rate= 1e-3)
 
 #data load
-x = np.load("C:/LPD_competition/npy/150project_x.npy",allow_pickle=True)
-y = np.load("C:/LPD_competition/npy/150project_y.npy",allow_pickle=True)
-x_pred = np.load('C:/LPD_competition/npy/150test.npy',allow_pickle=True)
+x = np.load("C:/LPD_competition/npy/128project_x.npy",allow_pickle=True)
+y = np.load("C:/LPD_competition/npy/128project_y.npy",allow_pickle=True)
+x_pred = np.load('C:/LPD_competition/npy/128test.npy',allow_pickle=True)
 
 
 print(x_pred.shape)
@@ -44,9 +44,12 @@ idg = ImageDataGenerator(
    
 idg2 = ImageDataGenerator()
 
-# idg3 = ImageDataGenerator(
-#     width_shift_range=(-1,1),   
-#     height_shift_range=(-1,1)) 
+idg3 = ImageDataGenerator(
+    width_shift_range=(-1,1),   
+    height_shift_range=(-1,1),
+    shear_range=0.2,
+    zoom_range = 0.1
+    ) 
 
 # y = np.argmax(y, axis=1)
 
@@ -54,7 +57,7 @@ x_train, x_valid, y_train, y_valid = train_test_split(x,y, train_size = 0.8, shu
 
 train_generator = idg.flow(x_train,y_train,batch_size=32)
 valid_generator = idg2.flow(x_valid,y_valid)
-# test_generator = idg3.flow(x_pred,batch_size=32)
+test_generator = idg3.flow(x_pred,shuffle = False)
 
 from keras.utils.generic_utils import get_custom_objects
 from tensorflow.python.keras.activations import swish
@@ -93,25 +96,25 @@ t2 = time()
 print("execution time: ", t2 - t1)
 # predict
 model.load_weights('C:/LPD_competition/lotte_projcet0323.h5')
-result = model.predict(x_pred,verbose=True)
+# result = model.predict(x_pred,verbose=True)
 
 
-# from math import ceil
-# from tqdm import tqdm
+from math import ceil
+from tqdm import tqdm
 
-# preds_tta = []
-# tta_steps = 10
-# for i in tqdm(range(tta_steps)):
-#     test_generator.reset()
-#     preds = model.predict_generator(
-#         generator=test_generator,
-#         steps =ceil(len(x_pred)/32)
-#     )
-#     preds_tta.append(preds)
+preds_tta = []
+tta_steps = 10
+for i in tqdm(range(tta_steps)):
+    test_generator.reset()
+    preds = model.predict_generator(
+        generator=test_generator,
+        steps =ceil(len(x_pred)/32)
+    )
+    preds_tta.append(preds)
 
-# preds_mean = np.mean(preds_tta, axis=0)
+preds_mean = np.mean(preds_tta, axis=0)
 sub = pd.read_csv('C:/LPD_competition/sample.csv')
-sub['prediction'] = np.argmax(result, axis=1)
+sub['prediction'] = np.argmax(preds_mean, axis=1)
 sub.to_csv('C:/LPD_competition/answer0323.csv',index=False)
 
 # 데이터 변경
