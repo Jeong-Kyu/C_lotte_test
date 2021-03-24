@@ -67,17 +67,16 @@ get_custom_objects().update({'swish': Activation(swish)})
 md = EfficientNetB4(input_shape = IMAGE_SIZE, weights = "imagenet", include_top = False)
 for layer in md.layers:
     layer.trainable = True
-x = md.output
-x = Dropout(0.3) (x)
-x = Dense(512,activation = 'swish') (x)
-x = tf.keras.layers.GaussianDropout(0.4) (x)
-x = GlobalAvgPool2D(name='global_avg')(md.output)
-prediction = Dense(1000, activation='softmax')(x)
-model = Model(inputs=md.input, outputs=prediction)
+c = md.output
+c = GlobalAveragePooling2D()(c)
+c = Flatten()(c)
+c = Dense(10048, activation= 'swish') (c)
+c = Dropout(0.2) (c)
+c = Dense(1000, activation="softmax")(c)
+model = Model(inputs=md.input, outputs = c)
 
-model.summary()
 
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+# from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 # from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 # cp = ModelCheckpoint('C:/LPD_competition/lotte_projcet0323.h5',monitor='val_acc',save_best_only=True, verbose=1)
@@ -94,16 +93,16 @@ from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 # t2 = time()
 # print("execution time: ", t2 - t1)
-# predict
+# # predict
 model.load_weights('C:/LPD_competition/lotte_projcet0323.h5')
-# result = model.predict(x_pred,verbose=True)
+# # result = model.predict(x_pred,verbose=True)
 
 
 from math import ceil
 from tqdm import tqdm
 
 preds_tta = []
-tta_steps = 20
+tta_steps = 10
 for i in tqdm(range(tta_steps)):
     test_generator.reset()
     preds = model.predict_generator(
